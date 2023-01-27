@@ -39,13 +39,18 @@ exports.register = async (req, res, next)=>{
          newUser.token = token
          newUser.verifyEmailToken = token1
          await newUser.save()
+
+         const verifyUser = `${req.protocol}://${req.get(
+            "host"
+          )}/api/verifyuser/${newUser._id}/${newUser.verifyEmailToken}`;
+         
          const mailOptions = {
             from: process.env.USER,
             to: newUser.email,
             subject: "Successful Registration",
           html: `
-           <h4>Hi ${newUser.firstName} ${newUser.lastName}</h4>
-           <p>Thanks you!</p>
+           <h4>Hi ${newUser.name}</h4>
+           <p>Thank you for registering with us. Please click on this link ${verifyUser} to verify</p>
             `,
         }
   
@@ -105,14 +110,18 @@ exports.adminRegister = async (req, res, next)=>{
          newUser.token = token
          newUser.verifyEmailToken = token1
 
+         const verifyUser = `${req.protocol}://${req.get(
+          "host"
+        )}/api/verifyuser/${newUser._id}/${newUser.verifyEmailToken}`;
+
          await newUser.save()
          const mailOptions ={
             from: process.env.USER,
             to: newUser.email,
             subject: "Successful Registration",
           html: `
-           <h4>Hi ${newUser.firstName} ${newUser.lastName}</h4>
-           <p>Thanks you!</p>
+           <h4>Hi ${newUser.name}</h4>
+           <p>Thank you for registering with us. Please click on this link ${verifyUser} to verify</p>
             `,
         }
   
@@ -161,9 +170,9 @@ exports.login = async (req, res, next)=>{
             to: Users.email,
             subject: "Successful Login!",
           html: `
-           <h4>Dear ${Users.firstName} ${Users.lastName}</h4>
+           <h4>Dear ${Users.name}</h4>
            <p>Welcome back!</p>
-           <p> You have logged in successfully to Availtrade</p>
+           <p> You have logged in successfully to Onboarding</p>
            <p>If you did not initiate this, change your password immediately and send our Customer Center a email to <br/> ${process.env.USER}
            </p>
            <p>Why send this email? We take security very seriously and we want to keep you in the loop of activities on your account.</p>
@@ -209,9 +218,9 @@ exports.adminlogin = async (req, res, next)=>{
             to: Users.email,
             subject: "Successful Login!",
           html: `
-           <h4>Dear ${Users.firstName} ${Users.lastName}</h4>
+           <h4>Dear ${Users.name}</h4>
            <p>Welcome back!</p>
-           <p> You have logged in successfully to Availtrade</p>
+           <p> You have logged in successfully to Onboarding</p>
            <p>If you did not initiate this, change your password immediately and send our Customer Center a email to <br/> ${process.env.USER}
            </p>
            <p>Why send this email? We take security very seriously and we want to keep you in the loop of activities on your account.</p>
@@ -232,3 +241,29 @@ exports.adminlogin = async (req, res, next)=>{
         next(err)
     }
 }
+
+exports.verify = async (req, res, next) => {
+    try {
+      console.log("user._id");
+      const user = await User.findOne({ _id: req.params.id });
+      if (!user) return next(createError(400, "No user Found"));
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          verify: true,
+          verifyEmailToken: null
+        },
+        { new: true }
+      );
+      await user.save();
+  
+    //   res
+    //     .redirect(`http://localhost:3000/users/verifyuser/${user._id}`)
+        res.status(200)
+        .json({
+          message: "successfully verified",
+        });
+    } catch (error) {
+      next(error);
+    }
+  };

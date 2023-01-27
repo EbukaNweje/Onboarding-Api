@@ -8,5 +8,6 @@ Routers.route("/register").post([
     check('email', 'Please include a valid email').isEmail(),
   ],register.register)
 Routers.route("/login").post(register.login)
+Routers.route("/verifyuser/:id/:token").post(register.verify)
 
 module.exports = Routers
