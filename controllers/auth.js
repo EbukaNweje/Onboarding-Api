@@ -267,3 +267,60 @@ exports.verify = async (req, res, next) => {
       next(error);
     }
   };
+
+exports.forgotpassword = async (req, res, next) => {
+  try {
+      const {email} = req.body
+      const userEmail = await User.findOne({email})
+      if(!userEmail) return next(createError(400, "No user Found"))
+      const token = jwt.sign({ id: userEmail._id }, process.env.JWT, {
+        expiresIn: "1m",
+      });
+
+      const resetURL = `${req.protocol}://${req.get(
+        'host',
+      )}/auth/resetpassword/${userEmail._id}/${token}`
+
+      const mailOptions ={
+        from: process.env.USER,
+        to: userEmail.email,
+        subject: "Reset Password",
+      html: `
+       <p> Use this link ${resetURL} to rest your password</p>
+        `,
+    }
+
+    transporter.sendMail(mailOptions,(err, info)=>{
+        if(err){
+            console.log(err.message);
+        }else{
+            console.log("Email has been sent to your inbox", info.response);
+        }
+    })
+
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+exports.resetPassword = async (req, res, next) => {
+  try{
+    const id = req.params.id
+    const token = req.params.token
+   
+  jwt.verify(token, process.env.JWT, async (err) => {
+    if (err) {
+      return next(createError(403, "Token not valid"));
+    }
+  });
+  const userpaassword = await User.findById(id)
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(req.body.password, salt)
+  userpaassword.password = hash
+  userpaassword.save()
+  res.send("you have successfuly change your password")
+
+  }catch(err){next(err)}
+}
+

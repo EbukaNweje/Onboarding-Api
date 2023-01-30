@@ -11,6 +11,7 @@ const Routers = express.Router()
 Routers.route("/adminregister").post([
     check('email', 'Please include a valid email').isEmail(),
   ],register.adminRegister)
+  
 Routers.route("/adminlogin").post(register.adminlogin)
 
 Routers.route("/createproduct/:adminId").post(verifyAdmin, product.newProduct)
@@ -27,6 +28,6 @@ Routers.route("/getoneuser/:adminId/:userId").get(verifyAdmin, Accounts.getOneUs
 
 Routers.route("/updateuser/:adminId/:userId").patch(verifyAdmin, Accounts.getOneUser)
 
-Routers.route("/deleteuser/:adminId/:userId").patch(verifyAdmin, Accounts.deleteOneUser)
+Routers.route("/deleteuser/:adminId/:userId").delete(verifyAdmin, Accounts.deleteOneUser)
 
 module.exports = Routers
